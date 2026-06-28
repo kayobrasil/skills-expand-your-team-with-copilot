@@ -30,6 +30,7 @@
   --error-light: #ffebee;
   --info: #0c5460;
   --info-light: #d1ecf1;
+  --icon-size-small: 0.95rem;
 }
 
 html {
@@ -684,7 +685,7 @@ footer {
 }
 
 .theme-icon {
-  font-size: 0.95rem;
+  font-size: var(--icon-size-small);
 }
 
 #logout-button {
