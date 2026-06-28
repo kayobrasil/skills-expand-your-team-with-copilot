@@ -49,6 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const ACTIVITY_SLUG_SEPARATOR = "-";
   const HIGHLIGHT_DURATION_MS = 2500;
 
+  // Theme state
+  const themeStorageKey = "theme";
+
   // Time range mappings for the dropdown
   const timeRanges = {
     morning: { start: "06:00", end: "08:00" }, // Before school hours
@@ -215,6 +218,62 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       document.body.classList.add("not-authenticated");
     }
+  }
+
+  function getThemeToggleElements() {
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeIcon = themeToggle
+      ? themeToggle.querySelector(".theme-icon")
+      : null;
+    const themeLabel = themeToggle
+      ? themeToggle.querySelector(".theme-label")
+      : null;
+
+    return { themeToggle, themeIcon, themeLabel };
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(themeStorageKey, theme);
+    } catch (error) {
+      console.error("Unable to save theme preference:", error);
+    }
+    updateThemeToggle(theme);
+  }
+
+  function updateThemeToggle(theme) {
+    const { themeToggle, themeIcon, themeLabel } = getThemeToggleElements();
+    if (!themeToggle || !themeIcon || !themeLabel) {
+      return;
+    }
+
+    const isDark = theme === "dark";
+    themeToggle.setAttribute(
+      "aria-label",
+      isDark ? "Switch to light mode" : "Switch to dark mode"
+    );
+    themeToggle.setAttribute("aria-pressed", isDark ? "true" : "false");
+    themeIcon.textContent = isDark ? "☀️" : "🌙";
+    themeLabel.textContent = isDark ? "Light mode" : "Dark mode";
+  }
+
+  function initializeTheme() {
+    const theme = document.documentElement.dataset.theme || "light";
+    updateThemeToggle(theme);
+  }
+
+  function bindThemeToggle() {
+    const { themeToggle } = getThemeToggleElements();
+    if (!themeToggle) {
+      return;
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme =
+        document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+    });
   }
 
   // Login function
@@ -1003,6 +1062,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Initialize app
+  initializeTheme();
+  bindThemeToggle();
   checkAuthentication();
   initializeFilters();
   fetchActivities();
