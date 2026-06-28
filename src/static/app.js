@@ -43,6 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Authentication state
   let currentUser = null;
+  let lastHighlightedHash = "";
+
+  const ACTIVITY_SLUG_PREFIX = "activity";
+  const ACTIVITY_SLUG_SEPARATOR = "-";
+  const HIGHLIGHT_DURATION_MS = 2500;
 
   // Time range mappings for the dropdown
   const timeRanges = {
@@ -50,6 +55,52 @@ document.addEventListener("DOMContentLoaded", () => {
     afternoon: { start: "15:00", end: "18:00" }, // After school hours
     weekend: { days: ["Saturday", "Sunday"] }, // Weekend days
   };
+
+  function createActivitySlug(name) {
+    return `${ACTIVITY_SLUG_PREFIX}${ACTIVITY_SLUG_SEPARATOR}${name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, ACTIVITY_SLUG_SEPARATOR)
+      .replace(/^-+|-+$/g, "")}`;
+  }
+
+  function buildActivityShareUrl(name) {
+    const shareUrl = new URL(window.location.href);
+    shareUrl.hash = createActivitySlug(name);
+    return shareUrl.toString();
+  }
+
+  async function copyToClipboard(text) {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error("Your browser does not support copying to the clipboard.");
+    }
+
+    await navigator.clipboard.writeText(text);
+  }
+
+  function openShareWindow(url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function highlightSharedActivity() {
+    const currentHash = window.location.hash;
+    if (!currentHash || currentHash === lastHighlightedHash) {
+      return;
+    }
+
+    const targetCard = document.getElementById(currentHash.slice(1));
+    if (!targetCard) {
+      return;
+    }
+
+    targetCard.classList.add("highlighted");
+    targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    lastHighlightedHash = currentHash;
+
+    setTimeout(() => {
+      targetCard.classList.remove("highlighted");
+    }, HIGHLIGHT_DURATION_MS);
+  }
 
   // Initialize filters from active elements
   function initializeFilters() {
@@ -304,6 +355,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return details.schedule;
   }
 
+  function createActivityShareText(name, details) {
+    return `Check out ${name} at Mergington High School. ${details.description} Schedule: ${formatSchedule(
+      details
+    )}.`;
+  }
+
   // Function to determine activity type (this would ideally come from backend)
   function getActivityType(activityName, description) {
     const name = activityName.toLowerCase();
@@ -472,12 +529,15 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(filteredActivities).forEach(([name, details]) => {
       renderActivityCard(name, details);
     });
+
+    highlightSharedActivity();
   }
 
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
     activityCard.className = "activity-card";
+    activityCard.id = createActivitySlug(name);
 
     // Calculate spots and capacity
     const totalSpots = details.max_participants;
@@ -555,21 +615,37 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
       </div>
       <div class="activity-card-actions">
-        ${
-          currentUser
-            ? `
-          <button class="register-button" data-activity="${name}" ${
-                isFull ? "disabled" : ""
-              }>
-            ${isFull ? "Activity Full" : "Register Student"}
-          </button>
-        `
-            : `
-          <div class="auth-notice">
-            Teachers can register students.
+        <div class="register-actions">
+          ${
+            currentUser
+              ? `
+            <button class="register-button" data-activity="${name}" ${
+                  isFull ? "disabled" : ""
+                }>
+              ${isFull ? "Activity Full" : "Register Student"}
+            </button>
+          `
+              : `
+            <div class="auth-notice">
+              Teachers can register students.
+            </div>
+          `
+          }
+        </div>
+        <div class="share-actions">
+          <span class="share-label">Share:</span>
+          <div class="share-buttons">
+            <button class="share-button" data-share-action="native" data-activity="${name}">
+              Share
+            </button>
+            <button class="share-button" data-share-action="x" data-activity="${name}">
+              X
+            </button>
+            <button class="share-button" data-share-action="whatsapp" data-activity="${name}">
+              WhatsApp
+            </button>
           </div>
-        `
-        }
+        </div>
       </div>
     `;
 
@@ -588,6 +664,67 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        const action = event.currentTarget.dataset.shareAction;
+        const shareUrl = buildActivityShareUrl(name);
+        const shareText = createActivityShareText(name, details);
+
+        try {
+          if (action === "native" && typeof navigator.share === "function") {
+            await navigator.share({
+              title: `${name} at Mergington High School`,
+              text: shareText,
+              url: shareUrl,
+            });
+            return;
+          }
+
+          if (action === "native") {
+            await copyToClipboard(shareUrl);
+            showMessage("Link copied to clipboard!", "info");
+            return;
+          }
+
+          if (action === "x") {
+            openShareWindow(
+              `https://x.com/intent/tweet?text=${encodeURIComponent(
+                `${shareText} ${shareUrl}`
+              )}`
+            );
+            return;
+          }
+
+          if (action === "whatsapp") {
+            openShareWindow(
+              `https://wa.me/?text=${encodeURIComponent(
+                `${shareText} ${shareUrl}`
+              )}`
+            );
+            return;
+          }
+
+          await copyToClipboard(shareUrl);
+          showMessage("Activity link copied to your clipboard.", "success");
+        } catch (error) {
+          console.error("Error sharing activity:", error);
+          let shareErrorMessage;
+          if (action === "native") {
+            shareErrorMessage = "Sharing is not available in your browser.";
+          } else if (action === "x" || action === "whatsapp") {
+            shareErrorMessage =
+              "Could not open the sharing window. Please try again.";
+          } else {
+            shareErrorMessage =
+              "Could not copy the link. Please copy the page URL manually.";
+          }
+
+          showMessage(shareErrorMessage, "error");
+        }
+      });
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -629,6 +766,8 @@ document.addEventListener("DOMContentLoaded", () => {
       fetchActivities();
     });
   });
+
+  window.addEventListener("hashchange", highlightSharedActivity);
 
   // Add event listeners for time filter buttons
   timeFilters.forEach((button) => {
