@@ -207,6 +207,7 @@ section h3 {
 
 .difficulty-tag {
   position: absolute;
+  /* Placed below the category tag in the card corner */
   top: 33px;
   right: 8px;
   font-size: 0.65rem;

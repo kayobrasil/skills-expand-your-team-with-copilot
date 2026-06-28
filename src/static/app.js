@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // State for activities and filters
   let allActivities = {};
   let currentFilter = "all";
-  let currentDifficultyFilter = "all";
+  let currentDifficultyFilter = "uncategorized";
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
@@ -96,7 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function matchesDifficultyFilter(details) {
     const difficulty = normalizeDifficulty(details.difficulty);
 
-    if (currentDifficultyFilter === "all") {
+    // The "All" button is for activities without a difficulty value.
+    if (currentDifficultyFilter === "uncategorized") {
       return !difficulty;
     }
 
