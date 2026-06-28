@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Authentication elements
   const themeToggle = document.getElementById("theme-toggle");
-  const themeIcon = themeToggle.querySelector(".theme-icon");
-  const themeLabel = themeToggle.querySelector(".theme-label");
+  const themeIcon = themeToggle ? themeToggle.querySelector(".theme-icon") : null;
+  const themeLabel = themeToggle ? themeToggle.querySelector(".theme-label") : null;
   const loginButton = document.getElementById("login-button");
   const userInfo = document.getElementById("user-info");
   const displayName = document.getElementById("display-name");
@@ -183,6 +183,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateThemeToggle(theme) {
+    if (!themeToggle || !themeIcon || !themeLabel) {
+      return;
+    }
+
     const isDark = theme === "dark";
     themeToggle.setAttribute(
       "aria-label",
@@ -273,11 +277,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Event listeners for authentication
-  themeToggle.addEventListener("click", () => {
-    const nextTheme =
-      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    applyTheme(nextTheme);
-  });
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const nextTheme =
+        document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+    });
+  }
   loginButton.addEventListener("click", openLoginModal);
   logoutButton.addEventListener("click", logout);
   closeLoginModal.addEventListener("click", closeLoginModalHandler);
