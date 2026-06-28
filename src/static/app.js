@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function matchesDifficultyFilter(details) {
     const difficulty = normalizeDifficulty(details.difficulty);
 
-    // The "All" button is for activities without a difficulty value.
+    // The "All" button shows only activities without an assigned difficulty level.
     if (currentDifficultyFilter === "all") {
       return !difficulty;
     }
