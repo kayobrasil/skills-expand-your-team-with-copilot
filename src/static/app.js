@@ -192,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "aria-label",
       isDark ? "Switch to light mode" : "Switch to dark mode"
     );
+    themeToggle.setAttribute("aria-pressed", isDark.toString());
     themeIcon.textContent = isDark ? "☀️" : "🌙";
     themeLabel.textContent = isDark ? "Light mode" : "Dark mode";
   }
