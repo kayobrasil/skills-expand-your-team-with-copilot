@@ -16,9 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const timeFilters = document.querySelectorAll(".time-filter");
 
   // Authentication elements
-  const themeToggle = document.getElementById("theme-toggle");
-  const themeIcon = themeToggle ? themeToggle.querySelector(".theme-icon") : null;
-  const themeLabel = themeToggle ? themeToggle.querySelector(".theme-label") : null;
   const loginButton = document.getElementById("login-button");
   const userInfo = document.getElementById("user-info");
   const displayName = document.getElementById("display-name");
@@ -172,6 +169,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function getThemeToggleElements() {
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeIcon = themeToggle
+      ? themeToggle.querySelector(".theme-icon")
+      : null;
+    const themeLabel = themeToggle
+      ? themeToggle.querySelector(".theme-label")
+      : null;
+
+    return { themeToggle, themeIcon, themeLabel };
+  }
+
   function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
     try {
@@ -183,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateThemeToggle(theme) {
+    const { themeToggle, themeIcon, themeLabel } = getThemeToggleElements();
     if (!themeToggle || !themeIcon || !themeLabel) {
       return;
     }
@@ -198,15 +208,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function initializeTheme() {
-    let savedTheme = null;
-    try {
-      savedTheme = localStorage.getItem(themeStorageKey);
-    } catch (error) {
-      console.error("Unable to read theme preference:", error);
-    }
-    const theme = savedTheme || document.documentElement.dataset.theme || "light";
+    const theme = document.documentElement.dataset.theme || "light";
     document.documentElement.dataset.theme = theme;
     updateThemeToggle(theme);
+  }
+
+  function bindThemeToggle() {
+    const { themeToggle } = getThemeToggleElements();
+    if (!themeToggle) {
+      return;
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme =
+        document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+    });
   }
 
   // Login function
@@ -278,13 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Event listeners for authentication
-  if (themeToggle) {
-    themeToggle.addEventListener("click", () => {
-      const nextTheme =
-        document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-      applyTheme(nextTheme);
-    });
-  }
   loginButton.addEventListener("click", openLoginModal);
   logoutButton.addEventListener("click", logout);
   closeLoginModal.addEventListener("click", closeLoginModalHandler);
@@ -915,6 +925,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   initializeTheme();
+  bindThemeToggle();
   checkAuthentication();
   initializeFilters();
   fetchActivities();
