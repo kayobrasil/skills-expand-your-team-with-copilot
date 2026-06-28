@@ -209,7 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function initializeTheme() {
     const theme = document.documentElement.dataset.theme || "light";
-    document.documentElement.dataset.theme = theme;
     updateThemeToggle(theme);
   }
 

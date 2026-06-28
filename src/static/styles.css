@@ -319,9 +319,8 @@ button {
   transition: background-color 0.2s;
 }
 
-input,
-textarea,
-select {
+.search-box input,
+.form-group input {
   background-color: var(--surface);
   color: var(--text-primary);
   border-color: var(--border);
